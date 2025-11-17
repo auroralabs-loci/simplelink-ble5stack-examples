@@ -22,7 +22,6 @@ jobs:
     env:
       UPSTREAM_REPO: '${{ vars.UPSTREAM_REPO }}'
       MAIN_BRANCH: "main"
-      UPSTREAM_SHA: 'f4f5592637652b1193a8c6e50975cd2d3c9abff8'
 
     steps:
       - uses: actions/checkout@v5
@@ -46,12 +45,7 @@ jobs:
           git fetch upstream
 
           # Current upstream commit of the default branch
-          if [ -n "$UPSTREAM_SHA" ]; then
-            echo "Fetch fixed upstream SHA: $UPSTREAM_SHA"
-            echo "sha=$UPSTREAM_SHA" >> $GITHUB_OUTPUT
-          else
-            echo "sha=$(git rev-parse upstream/HEAD)" >> $GITHUB_OUTPUT
-          fi
+          echo "sha=$(git rev-parse upstream/HEAD)" >> $GITHUB_OUTPUT
 
       - name: Check if ${{ env.MAIN_BRANCH }} was updated
         id: check
