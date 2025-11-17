@@ -33,7 +33,7 @@ jobs:
 
       - name: Checkout required submodules
         run: |
-          git submodule update --init --depth 1 --progress simplelink-lowpower-f3-sdk
+          git submodule update --init --depth 1 --progress
         shell: bash
 
       - name: Prepare environment - install essential dependencies
