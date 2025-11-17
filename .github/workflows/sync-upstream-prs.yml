@@ -1,7 +1,7 @@
 name: Mirror Upstream PRs
 on:
-  schedule:
-    - cron: '45 1-5,7-11,13-17,19-23 * * *'
+  # schedule:
+  #   - cron: '45 1-5,7-11,13-17,19-23 * * *'
   workflow_dispatch: {}
 
 permissions:
