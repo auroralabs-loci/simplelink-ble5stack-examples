@@ -38,9 +38,9 @@ jobs:
       - name: Prepare environment - install essential dependencies
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install build-essential cmake git python3-minimal unzip
+          sudo apt-get -y install build-essential cmake git python3-minimal unzip gcc-arm-none-eabi
           echo "CMAKE=$(which cmake)" >> "$GITHUB_ENV"
-          echo "GCC_ARMCOMPILER=" >> "$GITHUB_ENV"
+          echo "GCC_ARMCOMPILER=/usr" >> "$GITHUB_ENV"
           echo "IAR_ARMCOMPILER=" >> "$GITHUB_ENV"
         shell: bash
 
