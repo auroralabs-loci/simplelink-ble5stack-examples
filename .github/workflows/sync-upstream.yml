@@ -47,10 +47,23 @@ jobs:
           # Current upstream commit of the default branch
           echo "sha=$(git rev-parse upstream/HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Check if ${{ env.MAIN_BRANCH }} was updated
+      - name: Check if ${{ env.MAIN_BRANCH }} or overlay was updated
         id: check
         run: |
-          if [ "${{ steps.before.outputs.sha }}" != "${{ steps.fetch.outputs.sha }}" ]; then
+          main_sha=$(git rev-parse --verify refs/remotes/origin/${MAIN_BRANCH} 2>/dev/null || true)
+          main_tree=""
+          if [ -n "$main_sha" ]; then
+            main_tree=$(git rev-parse "${main_sha}:.github" 2>/dev/null || true)
+          fi
+
+          overlay_sha=$(git rev-parse --verify refs/remotes/origin/overlay 2>/dev/null || true)
+          overlay_tree=""
+          if [ -n "$overlay_sha" ]; then
+            overlay_tree=$(git rev-parse "${overlay_sha}:.github" 2>/dev/null || true)
+          fi
+
+          if [ "${{ steps.before.outputs.sha }}" != "${{ steps.fetch.outputs.sha }}" ] || \
+            [ -z "$main_tree" ] || [ "$main_tree" != "$overlay_tree" ] ; then
             echo "updated=true" >> $GITHUB_OUTPUT
             echo "> $MAIN_BRANCH was updated"
           else
