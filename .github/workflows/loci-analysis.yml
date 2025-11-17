@@ -61,7 +61,8 @@ jobs:
           chmod +x $INSTALLER
           sudo mkdir -p $INSTALL_DIR
           sudo ./$INSTALLER --mode unattended --unattendedmodeui none --prefix $INSTALL_DIR
-          echo "SYSCONFIG_TOOL=${INSTALL_DIR}/sysconfig_cli.sh" >> "$GITHUB_ENV"
+          SYSCONFIG_TOOL="${INSTALL_DIR}/sysconfig_cli.sh"
+          echo "SYSCONFIG_TOOL=${SYSCONFIG_TOOL}" >> "$GITHUB_ENV"
           echo "SysConfig tool: ${SYSCONFIG_TOOL}"
         shell: bash
 
@@ -82,7 +83,8 @@ jobs:
           chmod +x $INSTALLER
           sudo mkdir -p $INSTALL_DIR
           sudo ./$INSTALLER --mode unattended --unattendedmodeui none --prefix $INSTALL_DIR
-          echo "TICLANG_ARMCOMPILER=${INSTALL_DIR}/ti-cgt-armllvm_4.0.4.LTS" >> "$GITHUB_ENV"
+          TICLANG_ARMCOMPILER="${INSTALL_DIR}/ti-cgt-armllvm_4.0.4.LTS"
+          echo "TICLANG_ARMCOMPILER=${TICLANG_ARMCOMPILER}" >> "$GITHUB_ENV"
           echo "TI Clang Compiler: ${TICLANG_ARMCOMPILER}"
         shell: bash
       
