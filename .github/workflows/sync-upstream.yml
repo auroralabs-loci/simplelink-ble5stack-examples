@@ -1,7 +1,7 @@
 name: Sync Upstream
 on:
   schedule:
-    - cron: '45 */6 * * *'    # 00:45, 06:45, 12:45, 18:45
+    - cron: '5 12 * * *' # daily at 12:05 UTC
   workflow_dispatch:
 
 permissions:
