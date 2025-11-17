@@ -53,9 +53,12 @@ jobs:
           EXPECTED_SHA="52294fb330e8d2c3968b3232fc687e7eed16b2edb53140675411b6302305eb33"
 
           wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-nsUM6f7Vvb/1.25.0.4268/$INSTALLER
-          [[ $(sha256sum $INSTALLER | cut -d ' ' -f 1) == $EXPECTED_SHA ]] || exit
+          SHA=$(sha256sum "$INSTALLER" | cut -d ' ' -f 1)
+          if [[ "$SHA" != "$EXPECTED_SHA" ]]; then
+            echo "SHA mismatch for $INSTALLER" >&2
+            exit 1
+          fi
 
-          echo "Successfully downloaded and verified $INSTALLER"
           chmod +x $INSTALLER
           sudo mkdir -p $INSTALL_DIR
           sudo ./$INSTALLER --mode unattended --unattendedmodeui none --prefix $INSTALL_DIR
@@ -71,9 +74,12 @@ jobs:
           EXPECTED_SHA="98c60ecc259a07a54be6fcc0f55990332f493bfe5dad460c0ba83963f5dcb06f"
           
           wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-ayxs93eZNN/4.0.4.LTS/$INSTALLER
-          [[ $(sha256sum $INSTALLER | cut -d ' ' -f 1) == $EXPECTED_SHA ]] || exit
-          
-          echo "Successfully downloaded and verified $INSTALLER"
+          SHA=$(sha256sum "$INSTALLER" | cut -d ' ' -f 1)
+          if [[ "$SHA" != "$EXPECTED_SHA" ]]; then
+            echo "SHA mismatch for $INSTALLER" >&2
+            exit 1
+          fi
+
           chmod +x $INSTALLER
           sudo mkdir -p $INSTALL_DIR
           sudo ./$INSTALLER --mode unattended --unattendedmodeui none --prefix $INSTALL_DIR
