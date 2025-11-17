@@ -76,6 +76,11 @@ jobs:
           sudo ./$INSTALLER --mode unattended --unattendedmodeui none --prefix $INSTALL_DIR
           echo "TICLANG_ARMCOMPILER=${INSTALL_DIR}/ti-cgt-armllvm_4.0.4.LTS" >> "$GITHUB_ENV"
         shell: bash
+      
+      - name: Build f3 SDK
+        run: |
+          make -C simplelink-lowpower-f3-sdk/ -j8
+          echo "Successfully compiled f3 SDK"
 
       - name: Build LP_EM_CC2340R5 examples
         run: |
