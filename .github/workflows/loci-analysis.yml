@@ -51,11 +51,11 @@ jobs:
           set -euo pipefail
           BUILD_NUMBER=4268
           VERSION=1.25.0
-          INSTALLER=sysconfig-$VERSION-$BUILD_NUMBER-setup.run
+          INSTALLER=sysconfig-${VERSION}_${BUILD_NUMBER}-setup.run
           INSTALL_DIR=/opt/ti/sysconfig
           EXPECTED_SHA="52294fb330e8d2c3968b3232fc687e7eed16b2edb53140675411b6302305eb33"
 
-          wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-nsUM6f7Vvb/$VERSION.$BUILD_NUMBER/$INSTALLER
+          wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-nsUM6f7Vvb/${VERSION}.${BUILD_NUMBER}/$INSTALLER
           SHA=$(sha256sum "$INSTALLER" | cut -d ' ' -f 1)
           if [[ "$SHA" != "$EXPECTED_SHA" ]]; then
             echo "SHA mismatch for $INSTALLER" >&2
@@ -74,7 +74,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION=4.0.4.LTS
-          INSTALLER=ti_cgt_armllvm_$VERSION_linux-x64_installer.bin
+          INSTALLER=ti_cgt_armllvm_${VERSION}_linux-x64_installer.bin
           INSTALL_DIR=/opt/ti/clang
           EXPECTED_SHA="98c60ecc259a07a54be6fcc0f55990332f493bfe5dad460c0ba83963f5dcb06f"
 
@@ -88,7 +88,7 @@ jobs:
           chmod +x $INSTALLER
           sudo mkdir -p $INSTALL_DIR
           sudo ./$INSTALLER --mode unattended --unattendedmodeui none --prefix $INSTALL_DIR
-          TICLANG_ARMCOMPILER="${INSTALL_DIR}/ti-cgt-armllvm_$VERSION"
+          TICLANG_ARMCOMPILER="${INSTALL_DIR}/ti-cgt-armllvm_${VERSION}"
           echo "TICLANG_ARMCOMPILER=${TICLANG_ARMCOMPILER}" >> "$GITHUB_ENV"
           echo "TI Clang Compiler: ${TICLANG_ARMCOMPILER}"
         shell: bash
