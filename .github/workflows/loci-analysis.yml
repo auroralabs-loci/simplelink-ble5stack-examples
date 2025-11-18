@@ -49,11 +49,11 @@ jobs:
       - name: Prepare environment - install SysConfig
         run: |
           set -euo pipefail
-          BUILD_NUMBER=4268
-          VERSION=1.25.0
+          BUILD_NUMBER=3587
+          VERSION=1.20.0
           INSTALLER=sysconfig-${VERSION}_${BUILD_NUMBER}-setup.run
           INSTALL_DIR=/opt/ti/sysconfig
-          EXPECTED_SHA="52294fb330e8d2c3968b3232fc687e7eed16b2edb53140675411b6302305eb33"
+          EXPECTED_SHA="983a2aa6677d6dadc14942a8f3e3b1fbe9c3a36269fd46ea259dfa499b97c373"
 
           wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-nsUM6f7Vvb/${VERSION}.${BUILD_NUMBER}/$INSTALLER
           SHA=$(sha256sum "$INSTALLER" | cut -d ' ' -f 1)
@@ -73,10 +73,10 @@ jobs:
       - name: Prepare environment - install TI Clang Compiler
         run: |
           set -euo pipefail
-          VERSION=4.0.4.LTS
+          VERSION=3.2.2.LTS
           INSTALLER=ti_cgt_armllvm_${VERSION}_linux-x64_installer.bin
           INSTALL_DIR=/opt/ti/clang
-          EXPECTED_SHA="98c60ecc259a07a54be6fcc0f55990332f493bfe5dad460c0ba83963f5dcb06f"
+          EXPECTED_SHA="2864bb1013ec60b1290f92ff723a4fc222653db1278c08ad81af6063f698dec9"
 
           wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-ayxs93eZNN/$VERSION/$INSTALLER
           SHA=$(sha256sum "$INSTALLER" | cut -d ' ' -f 1)
