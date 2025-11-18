@@ -39,6 +39,8 @@ jobs:
         run: |
           sudo apt-get -y update
           sudo apt-get -y install build-essential cmake git python3-minimal unzip gcc-arm-none-eabi
+          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
           echo "CMAKE=$(which cmake)" >> "$GITHUB_ENV"
           echo "GCC_ARMCOMPILER=/usr" >> "$GITHUB_ENV"
           echo "IAR_ARMCOMPILER=" >> "$GITHUB_ENV"
@@ -47,11 +49,13 @@ jobs:
       - name: Prepare environment - install SysConfig
         run: |
           set -euo pipefail
-          INSTALLER=sysconfig-1.25.0_4268-setup.run
+          BUILD_NUMBER=4268
+          VERSION=1.25.0
+          INSTALLER=sysconfig-$VERSION-$BUILD_NUMBER-setup.run
           INSTALL_DIR=/opt/ti/sysconfig
           EXPECTED_SHA="52294fb330e8d2c3968b3232fc687e7eed16b2edb53140675411b6302305eb33"
 
-          wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-nsUM6f7Vvb/1.25.0.4268/$INSTALLER
+          wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-nsUM6f7Vvb/$VERSION.$BUILD_NUMBER/$INSTALLER
           SHA=$(sha256sum "$INSTALLER" | cut -d ' ' -f 1)
           if [[ "$SHA" != "$EXPECTED_SHA" ]]; then
             echo "SHA mismatch for $INSTALLER" >&2
@@ -69,11 +73,12 @@ jobs:
       - name: Prepare environment - install TI Clang Compiler
         run: |
           set -euo pipefail
-          INSTALLER=ti_cgt_armllvm_4.0.4.LTS_linux-x64_installer.bin
+          VERSION=4.0.4.LTS
+          INSTALLER=ti_cgt_armllvm_$VERSION_linux-x64_installer.bin
           INSTALL_DIR=/opt/ti/clang
           EXPECTED_SHA="98c60ecc259a07a54be6fcc0f55990332f493bfe5dad460c0ba83963f5dcb06f"
-          
-          wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-ayxs93eZNN/4.0.4.LTS/$INSTALLER
+
+          wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-ayxs93eZNN/$VERSION/$INSTALLER
           SHA=$(sha256sum "$INSTALLER" | cut -d ' ' -f 1)
           if [[ "$SHA" != "$EXPECTED_SHA" ]]; then
             echo "SHA mismatch for $INSTALLER" >&2
@@ -83,7 +88,7 @@ jobs:
           chmod +x $INSTALLER
           sudo mkdir -p $INSTALL_DIR
           sudo ./$INSTALLER --mode unattended --unattendedmodeui none --prefix $INSTALL_DIR
-          TICLANG_ARMCOMPILER="${INSTALL_DIR}/ti-cgt-armllvm_4.0.4.LTS"
+          TICLANG_ARMCOMPILER="${INSTALL_DIR}/ti-cgt-armllvm_$VERSION"
           echo "TICLANG_ARMCOMPILER=${TICLANG_ARMCOMPILER}" >> "$GITHUB_ENV"
           echo "TI Clang Compiler: ${TICLANG_ARMCOMPILER}"
         shell: bash
