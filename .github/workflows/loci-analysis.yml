@@ -46,7 +46,22 @@ jobs:
           echo "IAR_ARMCOMPILER=" >> "$GITHUB_ENV"
         shell: bash
 
+      - name: Check if example binaries have already been built
+        id: check_compilation
+        run: |
+          if [ -d CC2340R5 ]; then
+            if [ $(find CC2340R5 -name "*.out" | wc -l) -eq 10 ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+
       - name: Prepare environment - install SysConfig
+        if: steps.check_compilation.outputs.skip != 'true'
         run: |
           set -euo pipefail
           BUILD_NUMBER=4268
@@ -71,6 +86,7 @@ jobs:
         shell: bash
 
       - name: Prepare environment - install TI Clang Compiler
+        if: steps.check_compilation.outputs.skip != 'true'
         run: |
           set -euo pipefail
           VERSION=4.0.4.LTS
@@ -94,6 +110,7 @@ jobs:
         shell: bash
       
       - name: Prepare environment - download FreeRTOS
+        if: steps.check_compilation.outputs.skip != 'true'
         run: |
           set -euo pipefail
           FREERTOS=FreeRTOSv202104.00
@@ -102,15 +119,17 @@ jobs:
           echo "FREERTOS_INSTALL_DIR=./$FREERTOS" >> "$GITHUB_ENV"
 
       - name: Build f3 SDK
+        if: steps.check_compilation.outputs.skip != 'true'
         run: |
           make -C simplelink-lowpower-f3-sdk/ -j8
           echo "Successfully compiled f3 SDK"
 
       - name: Build LP_EM_CC2340R5 examples
+        if: steps.check_compilation.outputs.skip != 'true'
         run: |
           make -C examples/rtos/LP_EM_CC2340R5/
           echo "Successfully compiled LP_EM_CC2340R5 examples"
-          BINS=LP_EM_CC2340R5
+          BINS=CC2340R5
           mkdir -p "$BINS"
           find examples/rtos/LP_EM_CC2340R5/ble5stack/ \
             -type f -name "*.out" \
@@ -122,6 +141,6 @@ jobs:
         with:
           mode: upload
           binaries: |
-                LP_EM_CC2340R5
+              CC2340R5
           project: '${{ env.LOCI_PROJECT }}'
           wait-base: 'true'
