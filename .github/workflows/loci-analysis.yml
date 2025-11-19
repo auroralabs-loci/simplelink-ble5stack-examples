@@ -64,8 +64,8 @@ jobs:
         if: steps.check_compilation.outputs.skip != 'true'
         run: |
           set -euo pipefail
-          BUILD_NUMBER=3128
-          VERSION=1.17.0
+          BUILD_NUMBER=3587
+          VERSION=1.20.0
           INSTALLER=sysconfig-${VERSION}_${BUILD_NUMBER}-setup.run
           INSTALL_DIR=/opt/ti/sysconfig
           EXPECTED_SHA="bdc4e120c985c6f276cae430b02368f8798c2f80fcec461473c7baa971bc2704"
@@ -89,7 +89,7 @@ jobs:
         if: steps.check_compilation.outputs.skip != 'true'
         run: |
           set -euo pipefail
-          VERSION=2.1.3.LTS
+          VERSION=3.2.2.LTS
           INSTALLER=ti_cgt_armllvm_${VERSION}_linux-x64_installer.bin
           INSTALL_DIR=/opt/ti/clang
           EXPECTED_SHA="6cedd200b702bb47e42a99f3aa9ff4fdcb35441e9ce9fccae85f105363b8db0e"
