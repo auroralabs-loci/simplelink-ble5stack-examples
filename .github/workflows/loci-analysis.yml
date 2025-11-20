@@ -50,7 +50,7 @@ jobs:
         id: check_compilation
         run: |
           if [ -d CC2340R5 ]; then
-            if [ $(find CC2340R5 -name "*.out" | wc -l) -eq 9 ]; then
+            if [ $(find CC2340R5 -name "*.out" | wc -l) -gt 1 ]; then
               echo "skip=true" >> "$GITHUB_OUTPUT"
             else
               echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -141,6 +141,13 @@ jobs:
         with:
           mode: upload
           binaries: |
-              CC2340R5
+              CC2340R5/basic_ble.out
+              CC2340R5/data_stream.out
+              CC2340R5/basic_ble_ptm.out
+              CC2340R5/basic_persistent.out
+              CC2340R5/basic_ble_profiles.out
+              CC2340R5/basic_ble_oad_onchip.out
+              CC2340R5/basic_ble_oad_offchip.out
+              CC2340R5/basic_ble_oad_dual_image.out
           project: '${{ env.LOCI_PROJECT }}'
           wait-base: 'true'
