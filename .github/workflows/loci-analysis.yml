@@ -1,0 +1,153 @@
+name: LOCI Analysis
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: false
+        default: 'main'
+        type: string
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main ]
+
+jobs:
+  loci:
+    runs-on: ubuntu-latest
+
+    env:
+      LOCI_PROJECT: 'SimpleLink BLE5Stack'
+      LOCI_API_KEY: '${{ secrets.LOCI_API_KEY }}'
+      LOCI_BACKEND_URL: '${{ vars.LOCI_BACKEND_URL }}'
+
+    environment: ${{ vars.LOCI_ENV || 'PROD__AL_DEMO' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.branch || github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Checkout required submodules
+        run: |
+          git submodule update --init --depth 1 --progress
+        shell: bash
+
+      - name: Prepare environment - install essential dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install build-essential cmake git python3-minimal unzip gcc-arm-none-eabi
+          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          echo "CMAKE=$(which cmake)" >> "$GITHUB_ENV"
+          echo "GCC_ARMCOMPILER=/usr" >> "$GITHUB_ENV"
+          echo "IAR_ARMCOMPILER=" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Check if example binaries have already been built
+        id: check_compilation
+        run: |
+          if [ -d CC2340R5 ]; then
+            if [ $(find CC2340R5 -name "*.out" | wc -l) -gt 1 ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+
+      - name: Prepare environment - install SysConfig
+        if: steps.check_compilation.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER=4268
+          VERSION=1.25.0
+          INSTALLER=sysconfig-${VERSION}_${BUILD_NUMBER}-setup.run
+          INSTALL_DIR=/opt/ti/sysconfig
+          EXPECTED_SHA="52294fb330e8d2c3968b3232fc687e7eed16b2edb53140675411b6302305eb33"
+
+          wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-nsUM6f7Vvb/${VERSION}.${BUILD_NUMBER}/$INSTALLER
+          SHA=$(sha256sum "$INSTALLER" | cut -d ' ' -f 1)
+          if [[ "$SHA" != "$EXPECTED_SHA" ]]; then
+            echo "SHA mismatch for $INSTALLER" >&2
+            exit 1
+          fi
+
+          chmod +x $INSTALLER
+          sudo mkdir -p $INSTALL_DIR
+          sudo ./$INSTALLER --mode unattended --unattendedmodeui none --prefix $INSTALL_DIR
+          SYSCONFIG_TOOL="${INSTALL_DIR}/sysconfig_cli.sh"
+          echo "SYSCONFIG_TOOL=${SYSCONFIG_TOOL}" >> "$GITHUB_ENV"
+          echo "SysConfig tool: ${SYSCONFIG_TOOL}"
+        shell: bash
+
+      - name: Prepare environment - install TI Clang Compiler
+        if: steps.check_compilation.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          VERSION=4.0.4.LTS
+          INSTALLER=ti_cgt_armllvm_${VERSION}_linux-x64_installer.bin
+          INSTALL_DIR=/opt/ti/clang
+          EXPECTED_SHA="98c60ecc259a07a54be6fcc0f55990332f493bfe5dad460c0ba83963f5dcb06f"
+
+          wget https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-ayxs93eZNN/$VERSION/$INSTALLER
+          SHA=$(sha256sum "$INSTALLER" | cut -d ' ' -f 1)
+          if [[ "$SHA" != "$EXPECTED_SHA" ]]; then
+            echo "SHA mismatch for $INSTALLER" >&2
+            exit 1
+          fi
+
+          chmod +x $INSTALLER
+          sudo mkdir -p $INSTALL_DIR
+          sudo ./$INSTALLER --mode unattended --unattendedmodeui none --prefix $INSTALL_DIR
+          TICLANG_ARMCOMPILER="${INSTALL_DIR}/ti-cgt-armllvm_${VERSION}"
+          echo "TICLANG_ARMCOMPILER=${TICLANG_ARMCOMPILER}" >> "$GITHUB_ENV"
+          echo "TI Clang Compiler: ${TICLANG_ARMCOMPILER}"
+        shell: bash
+      
+      - name: Prepare environment - download FreeRTOS
+        if: steps.check_compilation.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          FREERTOS=FreeRTOSv202104.00
+          wget https://github.com/FreeRTOS/FreeRTOS/releases/download/202104.00/$FREERTOS.zip
+          unzip $FREERTOS.zip
+          echo "FREERTOS_INSTALL_DIR=./$FREERTOS" >> "$GITHUB_ENV"
+
+      - name: Build f3 SDK
+        if: steps.check_compilation.outputs.skip != 'true'
+        run: |
+          make -C simplelink-lowpower-f3-sdk/ -j8
+          echo "Successfully compiled f3 SDK"
+
+      - name: Build LP_EM_CC2340R5 examples
+        if: steps.check_compilation.outputs.skip != 'true'
+        run: |
+          make -C examples/rtos/LP_EM_CC2340R5/
+          echo "Successfully compiled LP_EM_CC2340R5 examples"
+          BINS=CC2340R5
+          mkdir -p "$BINS"
+          find examples/rtos/LP_EM_CC2340R5/ble5stack/ \
+            -type f -name "*.out" \
+            -exec cp {} "$BINS"/ \;
+        shell: bash
+
+      - name: LOCI Upload
+        uses: auroralabs-loci/loci-action@v1
+        with:
+          mode: upload
+          binaries: |
+              CC2340R5/basic_ble.out
+              CC2340R5/data_stream.out
+              CC2340R5/basic_ble_ptm.out
+              CC2340R5/basic_persistent.out
+              CC2340R5/basic_ble_profiles.out
+              CC2340R5/basic_ble_oad_onchip.out
+              CC2340R5/basic_ble_oad_offchip.out
+              CC2340R5/basic_ble_oad_dual_image.out
+          project: '${{ env.LOCI_PROJECT }}'
+          wait-base: 'true'
