@@ -1,0 +1,90 @@
+name: Sync Upstream
+on:
+  schedule:
+    - cron: '5 12 * * *' # daily at 12:05 UTC
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    env:
+      UPSTREAM_REPO: '${{ vars.UPSTREAM_REPO }}'
+      MAIN_BRANCH: "main"
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.MAIN_BRANCH }}
+          fetch-depth: 0
+
+      - name: Get last synced upstream commit (main~1)
+        id: before
+        run: |
+          # Last synced upstream commit is the parent of main (main~1)
+          echo "sha=$(git rev-parse HEAD~1)" >> $GITHUB_OUTPUT
+
+      - name: Get updated upstream commit
+        id: fetch
+        run: |
+          echo "> Add upstream remote"
+          git remote add upstream https://github.com/$UPSTREAM_REPO || true
+
+          echo "> Fetch upstream changes"
+          git fetch upstream
+
+          # Current upstream commit of the default branch
+          echo "sha=$(git rev-parse upstream/HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Check if ${{ env.MAIN_BRANCH }} or overlay was updated
+        id: check
+        run: |
+          main_sha=$(git rev-parse --verify refs/remotes/origin/${MAIN_BRANCH} 2>/dev/null || true)
+          main_tree=""
+          if [ -n "$main_sha" ]; then
+            main_tree=$(git rev-parse "${main_sha}:.github" 2>/dev/null || true)
+          fi
+
+          overlay_sha=$(git rev-parse --verify refs/remotes/origin/overlay 2>/dev/null || true)
+          overlay_tree=""
+          if [ -n "$overlay_sha" ]; then
+            overlay_tree=$(git rev-parse "${overlay_sha}:.github" 2>/dev/null || true)
+          fi
+
+          if [ "${{ steps.before.outputs.sha }}" != "${{ steps.fetch.outputs.sha }}" ] || \
+            [ -z "$main_tree" ] || [ "$main_tree" != "$overlay_tree" ] ; then
+            echo "updated=true" >> $GITHUB_OUTPUT
+            echo "> $MAIN_BRANCH was updated"
+          else
+            echo "updated=false" >> $GITHUB_OUTPUT
+            echo "> No changes from upstream"
+          fi
+
+      - name: Sync ${{ env.MAIN_BRANCH }} with upstream and apply overlay
+        if: steps.check.outputs.updated == 'true'
+        run: |
+          echo "> Reset $MAIN_BRANCH to upstream: ${{ steps.fetch.outputs.sha }}"
+          git reset --hard ${{ steps.fetch.outputs.sha }}
+
+          echo "> Overlay .github directory from overlay branch"
+          git restore --source origin/overlay .github
+
+          echo "> Commit overlay"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github
+          git commit -m "Apply workflow overlay from overlay branch [skip ci]"
+
+          echo "> Force push to origin/$MAIN_BRANCH"
+          git push -f origin $MAIN_BRANCH
