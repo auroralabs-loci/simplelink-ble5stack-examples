@@ -37,10 +37,18 @@ jobs:
 
       - name: Prepare environment - install essential dependencies
         run: |
+          echo "deb http://archive.ubuntu.com/ubuntu jammy universe" | sudo tee /etc/apt/sources.list.d/jammy.list
+          sudo tee /etc/apt/preferences.d/jammy-pin >/dev/null <<'EOF'
+          Package: *
+          Pin: release n=jammy
+          Pin-Priority: -10
+
+          Package: libtinfo5
+          Pin: release n=jammy
+          Pin-Priority: 500
+          EOF
           sudo apt-get -y update
-          sudo apt-get -y install build-essential cmake git python3-minimal unzip gcc-arm-none-eabi
-          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
-          sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          sudo apt-get -y install build-essential cmake git python3-minimal unzip gcc-arm-none-eabi libtinfo5
           echo "CMAKE=$(which cmake)" >> "$GITHUB_ENV"
           echo "GCC_ARMCOMPILER=/usr" >> "$GITHUB_ENV"
           echo "IAR_ARMCOMPILER=" >> "$GITHUB_ENV"
