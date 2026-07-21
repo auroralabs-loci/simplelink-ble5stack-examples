@@ -39,8 +39,10 @@ jobs:
         run: |
           sudo apt-get -y update
           sudo apt-get -y install build-essential cmake git python3-minimal unzip gcc-arm-none-eabi
-          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
-          sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          POOL="http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses"
+          DEB=$(wget -qO- "$POOL/" | grep -oE 'libtinfo5_[^"]*_amd64\.deb' | sort -V | tail -n1)
+          wget "$POOL/$DEB"
+          sudo apt install "./$DEB"
           echo "CMAKE=$(which cmake)" >> "$GITHUB_ENV"
           echo "GCC_ARMCOMPILER=/usr" >> "$GITHUB_ENV"
           echo "IAR_ARMCOMPILER=" >> "$GITHUB_ENV"
