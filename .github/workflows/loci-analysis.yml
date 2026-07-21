@@ -40,9 +40,21 @@ jobs:
           sudo apt-get -y update
           sudo apt-get -y install build-essential cmake git python3-minimal unzip gcc-arm-none-eabi
           POOL="http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses"
-          DEB=$(wget -qO- "$POOL/" | grep -oE 'libtinfo5_[^"]*_amd64\.deb' | sort -V | tail -n1)
-          wget "$POOL/$DEB"
-          sudo apt install "./$DEB"
+          # The pool listing can advertise a .deb that has already been rotated out
+          # (point-release bump), so try candidates newest-first until one downloads.
+          DEBS=$(wget -qO- "$POOL/" | grep -oE 'libtinfo5_[^"]*_amd64\.deb' | sort -Vr | uniq)
+          DEB=""
+          for candidate in $DEBS; do
+            if wget -q "$POOL/$candidate"; then
+              DEB="$candidate"
+              break
+            fi
+          done
+          if [ -z "$DEB" ]; then
+            echo "Could not download any libtinfo5 package from $POOL" >&2
+            exit 1
+          fi
+          sudo apt-get install -y "./$DEB"
           echo "CMAKE=$(which cmake)" >> "$GITHUB_ENV"
           echo "GCC_ARMCOMPILER=/usr" >> "$GITHUB_ENV"
           echo "IAR_ARMCOMPILER=" >> "$GITHUB_ENV"
